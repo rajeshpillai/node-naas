@@ -9,14 +9,17 @@ Notification as a Service (NaaS) is a lightweight service that allows any applic
 - **Real-Time Updates**: Clients receive updates in real-time as soon as they are broadcasted to a channel.
 - **Custom Data Handling**: Any type of data can be passed and received as part of notifications.
 
-## Project Structure
 
-```bash
-.
-├── server.js                # Express server for the Todo app
-├── notification-server.js   # WebSocket server for NaaS
-├── public
-│   ├── index.html           # Frontend for the Todo app
-│   └── styles.css           # Styles for the Todo app
-└── README.md                # Project documentation
+# Start the notification server
+```
+npm run dev
+```
+
+# Start the todo app server
+```javascript
+npm run demo
+```
+
+# Enjoy
+Open two browser window and enjoy your hard work :) 
 
