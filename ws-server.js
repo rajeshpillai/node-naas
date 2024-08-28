@@ -1,7 +1,10 @@
 import fs from "fs";
 import uWS from "uWebSockets.js";
 import path from "path";
-// const uWS = require('uWebSockets.js');
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
 const app = uWS.App();
 
 import { fileURLToPath } from 'url';
@@ -15,6 +18,14 @@ const activeSockets = [];
 
 // ROOM CODE -->
 let channels = {};
+
+async function authenticate(apiKey) {
+    const app = await prisma.App.findUnique({
+        where: { apiKey },
+    });
+    return app;
+}
+
 
 function subscribe(ws, channelName) {
     if (!channels[channelName]) {
@@ -33,6 +44,7 @@ function unsubscribe(ws, channelName) {
 }
 
 function broadcastToChannel(channelName, message) {
+    console.log("broadcast:", channels[channelName]);
     if (channels[channelName]) {
         for (let client of channels[channelName]) {
             console.log("Sending message: ", message);
@@ -54,16 +66,44 @@ app.ws('/*', {
     open: (ws) => {
         console.log('Client connected');
     },
-    message: (ws, message, isBinary) => {
+    message: async (ws, message, isBinary) => {
         const data = JSON.parse(Buffer.from(message).toString());
 
         console.log("Message received: ", data);
 
+        if (!data.api_key) {
+            console.log("Unauthorized!!!");
+            ws.send(JSON.stringify({ error: 'Unauthorized' }));
+            ws.close();
+            return;
+        }
+        // Authenticate the client
+        const app = await authenticate(data.api_key);
+        if (!app) {
+            console.log("Unauthorized!!!");
+            ws.send(JSON.stringify({ error: 'Unauthorized' }));
+            ws.close();
+            return;
+        }
+ 
+        // Check rate limits
+        //  if (app.notifications >= app.rateLimit) {
+        //      ws.send(JSON.stringify({ error: 'Rate limit exceeded' }));
+        //      return;
+        //  }
+
         switch(data.action) {
             case 'subscribe':
                 console.log(`Subscribing to channel ${data.channel}`);
+                if (!data.api_key) {
+                    console.log("Unauthorized!!!");
+                    ws.send(JSON.stringify({ error: 'Unauthorized' }));
+                    ws.close();
+                    return;
+                }
                 subscribe(ws, data.channel);
                 ws.currentChannel = data.channel; // Store the current channel in the WebSocket object
+                ws.appId = app.id;
                 break;
             case 'unsubscribe':
                 console.log(`Unsubscribing from channel ${data.channel}`);
@@ -71,14 +111,32 @@ app.ws('/*', {
                 delete ws.currentChannel;
                 break;
             case 'update':
+                console.log("UPDATE: (TODO: VERIFY)");
                 if (ws.currentChannel) {
                     console.log(`Updating channel ${ws.currentChannel} with message: ${data.content}`);
                     broadcastToChannel(ws.currentChannel, data.content);
                 }
                 break;
             case 'notify':
-                console.log(`Notifying clients in channel ${data.channel} with message: ${data.content}`);
-                broadcastToChannel(data.channel, data.content);
+                console.log("ws:notify:event:ws:cc<->data.currentChannel", ws.currentChannel, data.channel);
+                if (data.channel) {
+                    broadcastToChannel(data.channel, data.content);
+
+                    // Log the notification
+                    await prisma.notification.create({
+                        data: {
+                            appId: app.id,
+                            channel: data.channel,
+                            content: JSON.stringify(data.content),
+                        },
+                    });
+
+                    // Increment notifications count
+                    await prisma.app.update({
+                        where: { id: app.id },
+                        data: { notifications: app.notifications + 1 },
+                    });
+                }
                 break;
             default:
                 console.log('Unknown action');

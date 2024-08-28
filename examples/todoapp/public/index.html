@@ -24,6 +24,8 @@
             console.log('Connected to WebSocket server');
             socket.send(JSON.stringify({ 
                 action: 'subscribe', 
+                api_key: "4a2d472c-28a5-420a-a1a6-ace81c2e38ae",
+
                 channel: 'todos' 
             }));
         });

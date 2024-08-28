@@ -31,19 +31,21 @@ ws.on('error', function error(err) {
 
 app.post('/add-todo', (req, res) => {
     const todo = req.body.todo;
-    console.log("About to save a todo...");
+    console.log("About to save a todo...", ws.readyState);
     
     // Notify WebSocket server when the client is open
     if (ws.readyState === WebSocket.OPEN) {
+        console.log("About to send notifications...");
         ws.send(JSON.stringify({
             action: 'notify',
+            api_key: "4a2d472c-28a5-420a-a1a6-ace81c2e38ae",
             channel: 'todos',
             content: { 
                 title: todo,
                 completed: false
             }
         }));
-        
+        console.log("Sent notifications...");
     } else {
         console.error('WebSocket is not open, unable to send message');
     }

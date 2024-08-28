@@ -5,13 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon ws-server.js",
-    "demo":"nodemon examples/todoapp/todo-server.js"
+    "demo": "nodemon examples/todoapp/todo-server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@prisma/client": "^5.19.0",
+    "uuid": "^10.0.0",
     "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.48.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.19.0"
   }
 }
