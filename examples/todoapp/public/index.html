@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App with Notifications</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #todo-list { list-style-type: none; padding: 0; }
+        #todo-list li { padding: 10px; border-bottom: 1px solid #ddd; }
+        #todo-list li:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+    <h1>Todo App</h1>
+    <input type="text" id="todo-input" placeholder="Enter a new todo">
+    <button onclick="addTodo()">Add Todo</button>
+    <ul id="todo-list"></ul>
+
+    <script>
+        const socket = new WebSocket('ws://localhost:3000');
+
+        socket.addEventListener('open', () => {
+            console.log('Connected to WebSocket server');
+            socket.send(JSON.stringify({ 
+                action: 'subscribe', 
+                channel: 'todos' 
+            }));
+        });
+
+        socket.addEventListener('message', (event) => {
+            const data = JSON.parse(event.data);
+            addTodoToList(data);
+        });
+
+        function addTodo() {
+            const todoInput = document.getElementById('todo-input');
+            const todo = todoInput.value.trim();
+            if (todo) {
+                fetch('/add-todo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ todo })
+                }).then(() => {
+                    todoInput.value = '';
+                });
+            }
+        }
+
+        function addTodoToList(todo) {
+            const todoList = document.getElementById('todo-list');
+            const li = document.createElement('li');
+            li.textContent = todo.title;
+            todoList.appendChild(li);
+        }
+    </script>
+</body>
+</html>
+

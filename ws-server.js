@@ -1,6 +1,14 @@
-const fs = require('fs');
-const uWS = require('uWebSockets.js');
+import fs from "fs";
+import uWS from "uWebSockets.js";
+import path from "path";
+// const uWS = require('uWebSockets.js');
 const app = uWS.App();
+
+import { fileURLToPath } from 'url';
+
+// Get the directory name
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = 3000;
 const activeSockets = [];
@@ -27,7 +35,8 @@ function unsubscribe(ws, channelName) {
 function broadcastToChannel(channelName, message) {
     if (channels[channelName]) {
         for (let client of channels[channelName]) {
-            client.send(message);
+            console.log("Sending message: ", message);
+            client.send(JSON.stringify(message));
         }
     }
 }
@@ -47,6 +56,8 @@ app.ws('/*', {
     },
     message: (ws, message, isBinary) => {
         const data = JSON.parse(Buffer.from(message).toString());
+
+        console.log("Message received: ", data);
 
         switch(data.action) {
             case 'subscribe':
