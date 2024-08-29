@@ -93,6 +93,25 @@ app.ws('/*', {
         //  }
 
         switch(data.action) {
+            case 'getUnread':
+                const unreadNotifications = await prisma.notification.findMany({
+                    where: {
+                        appId: app.id,
+                        readStatus: false,
+                    },
+                });
+                ws.send(JSON.stringify({ unreadNotifications }));
+                break;
+
+            case 'markRead':
+                const notificationId = data.notificationId;
+                console.log(`Marking notif as read for id ${notificationId}`);
+                await prisma.notification.update({
+                    where: { id: notificationId },
+                    data: { readStatus: true },
+                });
+                ws.send(JSON.stringify({ success: true }));
+                break;
             case 'subscribe':
                 console.log(`Subscribing to channel ${data.channel}`);
                 if (!data.api_key) {

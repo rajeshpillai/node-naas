@@ -10,15 +10,25 @@
         #todo-list li { padding: 10px; border-bottom: 1px solid #ddd; }
         #todo-list li:last-child { border-bottom: none; }
     </style>
+    <link rel="stylesheet" href="lib/notif.css">
 </head>
 <body>
     <h1>Todo App</h1>
+    <div id="notification-container">
+        <div id="notification-list"></div>
+    </div>
+      
     <input type="text" id="todo-input" placeholder="Enter a new todo">
     <button onclick="addTodo()">Add Todo</button>
     <ul id="todo-list"></ul>
 
+    <script src="lib/notif.js"></script>
     <script>
         const socket = new WebSocket('ws://localhost:3000');
+
+        // Usage
+        const notificationManager = new NotificationManager('4a2d472c-28a5-420a-a1a6-ace81c2e38ae', socket);
+
 
         socket.addEventListener('open', () => {
             console.log('Connected to WebSocket server');
@@ -31,6 +41,7 @@
         });
 
         socket.addEventListener('message', (event) => {
+            console.log("socket:message:", event.data);
             const data = JSON.parse(event.data);
             addTodoToList(data);
         });

@@ -32,4 +32,5 @@ model Notification {
   channel   String
   content   String
   timestamp DateTime @default(now())
+  readStatus Boolean @default(false)
 }
